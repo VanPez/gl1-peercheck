@@ -72,7 +72,9 @@ persistent_peers = "af405a6c…@37.187.95.163:26656,0f9ad819…@5.135.143.103:26
 ```
 
 Because every exported peer was just successfully dialed, the list is live and
-usable — no dead ends.
+usable — no dead ends. **Known-bad peers are auto-excluded** (a small built-in
+denylist of nodes that are TCP-reachable but misbehave, e.g. one that spams
+oversized p2p messages); extend it with `--deny <id,id,...>`.
 
 ## What it checks (and what it doesn't)
 
