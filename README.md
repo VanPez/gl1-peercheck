@@ -4,7 +4,8 @@ A tiny, zero-dependency tool that audits GenesisL1's **bootstrap peer & seed
 list** — the `persistent_peers`/`seeds` in the `genesis-parameters` repo that a
 *new* node dials to join the network. It fetches those lists, TCP-dials every
 `id@host:port`, and reports which endpoints are still reachable (with latency)
-plus a clean list of dead/moved entries to prune.
+plus a clean list of unreachable entries (dead, or simply not exposing a public
+p2p port) to prune.
 
 A stale bootstrap list makes it harder for new nodes to connect (most dials hit
 dead ends), so keeping it fresh is a small but real improvement for onboarding.
@@ -13,8 +14,12 @@ dead ends), so keeping it fresh is a small but real improvement for onboarding.
 > not the chain. A validator can be signing every block while being un-dial-able
 > here — the standard sentry-node setup keeps validators' p2p ports private. For
 > consensus/validator health (who's signing), use a block explorer like
-> [ping.pub](https://ping.pub/genesisL1/uptime). A node showing `DOWN` below
-> means *that listed address is stale/unreachable*, not that an operator is down.
+> [ping.pub](https://ping.pub/genesisL1/uptime). A node showing `DOWN` below just
+> means *that listed address can't be dialed* — it may be dead/moved, or a
+> perfectly healthy validator that doesn't expose a public p2p port (that only
+> happens on a dedicated server, or at home with port 26656 forwarded). Either
+> way, an un-dial-able entry is useless as a *bootstrap* peer, so it's still
+> worth pruning from the list.
 
 ## Run it
 
