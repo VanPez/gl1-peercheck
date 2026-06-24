@@ -1,0 +1,65 @@
+# gl1-peercheck — GenesisL1 bootstrap peer/seed list auditor
+
+A tiny, zero-dependency tool that audits GenesisL1's **bootstrap peer & seed
+list** — the `persistent_peers`/`seeds` in the `genesis-parameters` repo that a
+*new* node dials to join the network. It fetches those lists, TCP-dials every
+`id@host:port`, and reports which endpoints are still reachable (with latency)
+plus a clean list of dead/moved entries to prune.
+
+A stale bootstrap list makes it harder for new nodes to connect (most dials hit
+dead ends), so keeping it fresh is a small but real improvement for onboarding.
+
+> ⚠️ **This is NOT validator or network health.** It audits the *bootstrap list*,
+> not the chain. A validator can be signing every block while being un-dial-able
+> here — the standard sentry-node setup keeps validators' p2p ports private. For
+> consensus/validator health (who's signing), use a block explorer like
+> [ping.pub](https://ping.pub/genesisL1/uptime). A node showing `DOWN` below
+> means *that listed address is stale/unreachable*, not that an operator is down.
+
+## Run it
+
+Requires only Python 3 — no `pip install`.
+
+```bash
+python3 gl1-peercheck.py            # human-readable report
+python3 gl1-peercheck.py --json     # machine-readable JSON
+python3 gl1-peercheck.py --timeout 5
+```
+
+Example output:
+
+```
+GenesisL1 peer health - 2026-06-24 10:40 UTC
+Source: genesis-parameters (peers + seeds)
+
+  UP    65.109.28.177:21496    c1a4ec51bf…  42 ms
+  UP    5.135.143.103:26656    0f9ad81931…  61 ms
+  DOWN  135.181.183.88:26656   0d07fb60f8…  TimeoutError
+  ...
+
+Summary: 17/20 reachable, 3 down
+
+Unreachable (candidates to prune from persistent_peers/seeds):
+  - 0d07fb60f8491f4b53a6b58ae0ce60d4c69be506@135.181.183.88:26656
+```
+
+Exit code is **1** if any peer is unreachable (handy for cron/CI), else **0**.
+
+## What it checks (and what it doesn't)
+
+- ✅ **TCP reachability** of each node's p2p port — is it alive and accepting
+  connections, and how fast.
+- ❌ It does **not** perform a full p2p handshake, so it won't catch
+  *protocol-level* misbehaviour (e.g. a node sending oversized messages). Finding
+  dead/unreachable entries in the official list is the goal here. (A deeper
+  handshake check is a possible v2.)
+
+## Handy uses
+
+- Run it before reporting a bad peer, to back it up with data.
+- Drop it in `cron` and alert when the official list rots.
+- Share the JSON so maintainers can prune dead entries from `peers.txt`/`seeds.txt`.
+
+## License
+
+MIT — free to use, fork, and self-host. Built for the GenesisL1 community.
